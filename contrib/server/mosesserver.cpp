@@ -519,6 +519,7 @@ public:
     // system.methodHelp RPC.
     this->_signature = "S:S";
     this->_help = "Does translation";
+    //m_threadPool.SetQueueLimit(100);
   }
 
   void
@@ -614,11 +615,17 @@ int main(int argc, char** argv)
   myRegistry.addMethod("updater", updater);
   myRegistry.addMethod("optimize", optimizer);
 
-  xmlrpc_c::serverAbyss myAbyssServer(
+  /*xmlrpc_c::serverAbyss myAbyssServer(
     myRegistry,
     port,              // TCP port on which to listen
     logfile
-  );
+  );*/
+  xmlrpc_c::serverAbyss myAbyssServer(xmlrpc_c::serverAbyss::constrOpt()
+                                        .registryP(&myRegistry)
+                                        .portNumber(port)
+                                        .logFileName(logfile)
+                                        .maxConn(100)
+                                        );
 
   cerr << "Listening on port " << port << endl;
   if (isSerial) {
