@@ -7,6 +7,8 @@
 #include "PerScorer.h"
 #include "TerScorer.h"
 #include "CderScorer.h"
+#include "SerScorer.h"
+#include "PrecScorer.h"
 #include "InterpolatedScorer.h"
 #include "SemposScorer.h"
 #include "PermutationScorer.h"
@@ -27,6 +29,11 @@ vector<string> ScorerFactory::getTypes()
   types.push_back(string("TER"));
   types.push_back(string("CDER"));
   types.push_back(string("WER"));
+  types.push_back(string("SER"));
+  types.push_back(string("PREC"));
+  types.push_back(string("REC"));
+  types.push_back(string("F1"));
+  types.push_back(string("MCC"));
   types.push_back(string("MERGE"));
   types.push_back(string("SEMPOS"));
   types.push_back(string("LRSCORE"));
@@ -48,6 +55,10 @@ Scorer* ScorerFactory::getScorer(const string& type, const string& config)
   } else if (type == "WER") {
     // CderScorer can compute both CDER and WER metric
     return new CderScorer(config, false);
+  } else if (type == "SER") {
+    return new SerScorer(config);
+  } else if (type == "PREC" || type == "REC" || type == "F1" || type == "MCC") {
+    return new PrecScorer(type, config);
   } else if (type == "SEMPOS") {
     return new SemposScorer(config);
   } else if ((type == "HAMMING") || (type == "KENDALL")) {

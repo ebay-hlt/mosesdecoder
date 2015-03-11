@@ -26,6 +26,8 @@ SemposOverlapping.cpp
 InterpolatedScorer.cpp
 Point.cpp
 PerScorer.cpp
+SerScorer.cpp
+PrecScorer.cpp
 Scorer.cpp
 ScorerFactory.cpp
 Optimizer.cpp
