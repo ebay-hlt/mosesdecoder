@@ -130,11 +130,14 @@ float PrecScorer::calculateScore(const vector<int>& comps) const
     nom = (tp*tn) - (fp*fn);
     denom = std::sqrt((tp+fp) * (tp+fn) * (tn+fp) * (tn+fn));
   }
+  //this is insane debugging
+  /*
   TRACE_ERR(tname+"=");
   TRACE_ERR(nom);
   TRACE_ERR("/");
   TRACE_ERR(denom);
   TRACE_ERR(endl);
+  */
   if (denom == 0.0) {
     // This shouldn't happen!
     return 0.0;
