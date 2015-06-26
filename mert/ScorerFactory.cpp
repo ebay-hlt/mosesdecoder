@@ -20,6 +20,8 @@ namespace MosesTuning
 {
 
 
+//no body is calling this one, don't really need to update :)
+/*
 vector<string> ScorerFactory::getTypes()
 {
   vector<string> types;
@@ -33,12 +35,15 @@ vector<string> ScorerFactory::getTypes()
   types.push_back(string("PREC"));
   types.push_back(string("REC"));
   types.push_back(string("F1"));
+  types.push_back(string("F0.5"));
+  types.push_back(string("LIN1"));
   types.push_back(string("MCC"));
   types.push_back(string("MERGE"));
   types.push_back(string("SEMPOS"));
   types.push_back(string("LRSCORE"));
   return types;
 }
+*/
 
 Scorer* ScorerFactory::getScorer(const string& type, const string& config)
 {
@@ -57,7 +62,8 @@ Scorer* ScorerFactory::getScorer(const string& type, const string& config)
     return new CderScorer(config, false);
   } else if (type == "SER") {
     return new SerScorer(config);
-  } else if (type == "PREC" || type == "REC" || type == "F1" || type == "MCC") {
+    //F0.5 more weight for precision
+  } else if (type == "PREC" || type == "REC" || type == "F1"  || type == "F0.5" || type == "LIN1"|| type == "MCC") {
     return new PrecScorer(type, config);
   } else if (type == "SEMPOS") {
     return new SemposScorer(config);

@@ -118,17 +118,25 @@ float PrecScorer::calculateScore(const vector<int>& comps) const
   float nom = 0.0;
   float denom = 0.0;
   if (tname == "PREC") {
-    nom = tp;
-    denom = tp+fp;
+      nom = tp;
+      denom = tp+fp;
   } else if (tname == "REC") {
-    nom = tp;
-    denom = p;
+      nom = tp;
+      denom = p;
   } else if (tname == "F1") {
-    nom = 2*tp;
-    denom = 2*tp+fp+fn;
+      nom = 2*tp;
+      denom = 2*tp+fp+fn;
+  } else if (tname == "F0.5") {
+      float beta = 0.5;
+      float beta2 = beta*beta;
+      nom = (1+beta2)*tp;
+      denom = (1+beta2)*tp+beta2*fn+fp;
+  } else if (tname == "LIN1") {
+      nom = tp+tn-fp-fn;
+      denom = 1;
   } else if (tname == "MCC") {
-    nom = (tp*tn) - (fp*fn);
-    denom = std::sqrt((tp+fp) * (tp+fn) * (tn+fp) * (tn+fn));
+      nom = (tp*tn) - (fp*fn);
+      denom = std::sqrt((tp+fp) * (tp+fn) * (tn+fp) * (tn+fn));
   }
   //this is insane debugging
   /*
