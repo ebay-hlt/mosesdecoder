@@ -1130,7 +1130,8 @@ if ($___TESTSETS){
     $out =~ s/.split$//;  #for german compound split
     $out = $___WORKING_DIR . "/" . $out . ".hyp";
     if (! -s $out){
-      safesystem("$___DECODER -th $__THREADS -f $ini  < $cwd/$test > $out")
+      my $mosesThreads = getDecoderThreads();
+      safesystem("$___DECODER $mosesThreads -f $ini  < $cwd/$test > $out")
       #TODO use qsubmit
       #qsubmit -m 64 -t 12:00:00 -n j.tr.$test "$___DECODER -th $__THREADS -f $ini  < $cwd/$test > $out"
     }
@@ -1141,6 +1142,16 @@ if ($___TESTSETS){
 chdir($cwd);
 
 } # end of local scope
+
+sub getDecoderThreads{
+  if ($__THREADS>0){
+    print STDERR "WARNING: using mert threads parameter also for moses decoder!\n";
+    return "-th $__THREADS";
+  }
+  return "";
+}
+
+
 
 sub get_weights_from_mert {
   my ($outfile, $logfile, $weight_count, $sparse_weights, $mix_weights) = @_;
@@ -1238,7 +1249,8 @@ sub run_decoder {
     if (defined $___JOBS && $___JOBS > 0) {
       $decoder_cmd = "$moses_parallel_cmd $pass_old_sge -config $___CONFIG -inputtype $___INPUTTYPE -qsub-prefix mert$run -queue-parameters \"$queue_flags\" -decoder-parameters \"$___DECODER_FLAGS $decoder_config\" $lsamp_cmd -n-best-list \"$filename $___N_BEST_LIST_SIZE\" -input-file $___DEV_F -jobs $___JOBS -decoder $___DECODER > run$run.out";
     } else {
-      $decoder_cmd = "$___DECODER $___DECODER_FLAGS  -config $___CONFIG -inputtype $___INPUTTYPE $decoder_config $lsamp_cmd -n-best-list $filename $___N_BEST_LIST_SIZE -input-file $___DEV_F > run$run.out";
+      my $mosesThreads = getDecoderThreads();
+      $decoder_cmd = "$___DECODER $mosesThreads $___DECODER_FLAGS  -config $___CONFIG -inputtype $___INPUTTYPE $decoder_config $lsamp_cmd -n-best-list $filename $___N_BEST_LIST_SIZE -input-file $___DEV_F > run$run.out";
     }
 
     safesystem($decoder_cmd) or die "The decoder died. CONFIG WAS $decoder_config \n";
