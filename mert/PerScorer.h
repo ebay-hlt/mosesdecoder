@@ -32,6 +32,10 @@ public:
   }
   virtual float calculateScore(const std::vector<ScoreStatsType>& comps) const;
 
+  virtual float getReferenceLength(const std::vector<ScoreStatsType>& totals) const{
+  	  return totals[2];
+  }
+
 private:
   // no copying allowed
   PerScorer(const PerScorer&);
