@@ -85,9 +85,9 @@ float PerScorer::calculateScore(const vector<ScoreStatsType>& comps) const
   float num = comps[0] - max(0.0f,comps[1]-comps[2]);
   if (denom == 0) {
     // This shouldn't happen!
-    return 1.0f;
+    return 0.0;
   } else {
-    return 1.0f - (num/denom);
+    return num/denom;
   }
 }
 
