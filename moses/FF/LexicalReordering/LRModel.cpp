@@ -126,7 +126,6 @@ LRModel(const std::string &modelType)
   , m_phraseBased(true)
   , m_collapseScores(false)
   , m_direction(Backward)
-  , m_additionalScoreComponents(0)
 {
   std::vector<std::string> config = Tokenize<std::string>(modelType, "-");
 
