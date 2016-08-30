@@ -30,7 +30,10 @@ LexicalReordering(const std::string &line)
       m_configuration.reset(new LRModel(args[1]));
       m_configuration->SetScoreProducer(this);
       m_modelTypeString = m_configuration->GetModelString();
-    } else if (args[0] == "input-factor")
+    }
+    else if (args[0] == "additional-features") // set additional features here
+    	m_configuration->SetAdditionalScoreComponents(Scan<float>(args[1]));
+    else if (args[0] == "input-factor")
       m_factorsF =Tokenize<FactorType>(args[1]);
     else if (args[0] == "output-factor")
       m_factorsE =Tokenize<FactorType>(args[1]);
