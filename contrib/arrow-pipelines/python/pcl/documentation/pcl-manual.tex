@@ -1,0 +1,94 @@
+%%%
+%%% PCL Manual
+%%% By Ian Johnson
+%%%
+
+\documentclass[11pt,a4paper,openright]{report}
+\includeonly{%
+  chapters/introduction/introduction,
+  chapters/compiler/compiler,
+  chapters/run-time/run-time,
+  chapters/adapter/adapter
+}
+
+
+
+%%% Some commonly used packages (make sure your LaTeX installation
+%%% contains these packages, if not ask your senior to help installing
+%%% the packages)
+
+\usepackage[bookmarks,%
+            a4paper,%
+            breaklinks,%
+            backref=false,%
+            dvips,ps2pdf,%
+            pdfhighlight=/I,%
+            pdffitwindow=true,%
+            pdfstartview=Fit,%
+            pdfcenterwindow=true,%
+            linkbordercolor={1 0 1},%
+            %colorlinks,%
+            pdftitle=PCL Manual,%
+            pdfauthor=Ian Johnson]%
+            {hyperref}
+
+
+\usepackage{cite}
+
+\usepackage{listings}
+
+\usepackage{amsmath}
+
+\usepackage{natbib}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\graphicspath{{expt/}}
+
+\usepackage{setspace}
+
+\usepackage{times}
+\usepackage[varg]{txfonts}
+
+
+%%% Macro definitions for Commonly used symbols
+\newcommand{\ReleaseVersion}{1.1.0-beta}
+\newcommand{\DiagramScale}{0.6}
+
+\begin{document}
+\title{\huge{Pipeline Creation Language (PCL)}\\
+\LARGE{User Manual}\\
+\normalsize{Version: \ReleaseVersion}}
+\author{Ian Johnson}
+\date{\today}
+
+\maketitle
+
+\tolerance=5000
+\onehalfspacing
+
+\begin{abstract}
+Pipeline Creation Language (PCL) is a general purpose language for creating non-recurrent software pipelines. This manual describes the syntax of PCL, how to compile it, and run it. Also, how to adapt your existing scripts or programs for use with PCL.
+
+PCL was developed as part of the MosesCore project sponsored by the European Commission's Seventh Framework Programme (Grant Number 288487) \url{http://www.statmt.org/mosescore/}. For more information on the Seventh Framework Programme please see \url{http://cordis.europa.eu/fp7/home_en.html}.
+\end{abstract}
+
+\pagenumbering{roman}
+
+\tableofcontents
+\listoffigures
+
+\cleardoublepage
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+\include{chapters/introduction/introduction}
+\include{chapters/compiler/compiler}
+\include{chapters/run-time/run-time}
+\include{chapters/adapter/adapter}
+
+%\bibliographystyle{plain}{}
+%\bibliography{pcl-manual}
+
+\end{document}
