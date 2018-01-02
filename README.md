@@ -43,3 +43,4 @@ Then, inside mosesdecoder directory run the regression tests
 
 `./compile.sh --with-regtest=~/src/moses-regression-tests --full`
 
+`mosesserver` tests might fail because of uninstalled `XMLRPC::Lite` perl module. In that case, please install the module and set the `PERL5LIB` path and run the test again. 
