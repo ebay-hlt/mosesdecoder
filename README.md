@@ -39,7 +39,11 @@ Then, copy the moses-regression-test directory to cluster (In my case, gridmaste
 
 `scp -r moses-regression-tests gridmaster:~/src/`
 
-Then, inside mosesdecoder directory run the regression tests
+You can also skip the above two steps and use pramathur's regression test directory here:
+
+`/vol/sdvol02/pramathur/src/moses-ebay/moses-regression-tests`
+
+Once the regression tests directory is on cluster, hop inside the mosesdecoder directory and run the regression tests
 
 `./compile.sh --with-regtest=~/src/moses-regression-tests --full`
 
