@@ -51,6 +51,7 @@ TER/tools.cpp
 TER/bestShiftStruct.cpp
 TerScorer.cpp
 CderScorer.cpp
+SerScorer.cpp
 MeteorScorer.cpp
 Vocabulary.cpp
 PreProcessFilter.cpp
