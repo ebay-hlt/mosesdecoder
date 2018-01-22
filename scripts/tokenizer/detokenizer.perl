@@ -202,8 +202,8 @@ sub detokenize {
 	#add trailing break
 	$text .= "\n" unless $text =~ /\n$/;
 
-        $text =~ s/^([[:punct:]\s]*)([[:alpha:]])/ucsecondarg($1, $2)/e if $UPPERCASE_SENT;
-
+    $text =~ s/^([[:punct:]\s]*)([[:alpha:]])/ucsecondarg($1, $2)/e if $UPPERCASE_SENT;
+    $text =~ s/< (.*?) >(.*?)< \/ ([a-zA-Z]*) >/<$1>$2<\/$3>/g ;
 	return $text;
 }
 

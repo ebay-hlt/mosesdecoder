@@ -157,7 +157,6 @@ $_HELP = 1
 		       'giza-e2f=s' => \$_GIZA_E2F,
 		       'giza-f2e=s' => \$_GIZA_F2E,
 		       'max-phrase-length=s' => \$_MAX_PHRASE_LENGTH,
-		       'distortion-limit=s' => \$_DISTORTION_LIMIT,
 		       'lexical-file=s' => \$_LEXICAL_FILE,
 		       'no-lexical-weighting' => \$_NO_LEXICAL_WEIGHTING,
 		       'write-lexical-counts' => \$_LEXICAL_COUNTS,
@@ -167,6 +166,7 @@ $_HELP = 1
 		       'sort-batch-size=i' => \$_SORT_BATCH_SIZE,
 		       'sort-compress=s' => \$_SORT_COMPRESS,
 		       'sort-parallel=i' => \$_SORT_PARALLEL,
+		       'distortion-limit=i' => \$_DISTORTION_LIMIT,
 		       'extract-file=s' => \$_EXTRACT_FILE,
 		       'alignment=s' => \$_ALIGNMENT,
 		       'alignment-file=s' => \$_ALIGNMENT_FILE,
@@ -325,6 +325,7 @@ my $_ADDITIONAL_INI; # allow multiple switches
 foreach (@_ADDITIONAL_INI) { $_ADDITIONAL_INI .= $_." "; }
 chop($_ADDITIONAL_INI) if $_ADDITIONAL_INI;
 
+$_HIERARCHICAL = 1 if $_SOURCE_SYNTAX || $_TARGET_SYNTAX;
 $_XML = 1 if $_SOURCE_SYNTAX || $_TARGET_SYNTAX;
 my $___FACTOR_DELIMITER = $_FACTOR_DELIMITER;
 $___FACTOR_DELIMITER = '|' unless ($_FACTOR_DELIMITER);
@@ -804,11 +805,11 @@ sub prepare {
 
 	&numberize_txt_file($VCB_F,$corpus.".".$___F,
 			    $VCB_E,$corpus.".".$___E,
-			    $___CORPUS_DIR."/$___F-$___E-int-train.snt");
+			    $___CORPUS_DIR."/$___F-$___E-int-train.snt", "$corpus.weight");
 
 	&numberize_txt_file($VCB_E,$corpus.".".$___E,
 			    $VCB_F,$corpus.".".$___F,
-			    $___CORPUS_DIR."/$___E-$___F-int-train.snt");
+			    $___CORPUS_DIR."/$___E-$___F-int-train.snt", "$corpus.weight");
     }
     else {
 	print "Forking...\n";
@@ -843,11 +844,11 @@ sub prepare {
 
 	&numberize_txt_file($VCB_F,$corpus.".".$___F,
 			    $VCB_E,$corpus.".".$___E,
-			    $___CORPUS_DIR."/$___F-$___E-int-train.snt");
+			    $___CORPUS_DIR."/$___F-$___E-int-train.snt", "$corpus.weight");
 
 	&numberize_txt_file($VCB_E,$corpus.".".$___E,
 			    $VCB_F,$corpus.".".$___F,
-			    $___CORPUS_DIR."/$___E-$___F-int-train.snt");
+			    $___CORPUS_DIR."/$___E-$___F-int-train.snt", "$corpus.weight");
 	printf "Waiting for mkcls processes to finish...\n";
 	waitpid($pid2, 0);
 	waitpid($pid, 0);
@@ -1056,21 +1057,29 @@ sub make_dicts_files {
 
 
 sub numberize_txt_file {
-    my ($VCB_DE,$in_de,$VCB_EN,$in_en,$out) = @_;
-    my %OUT;
-    print STDERR "(1.3) numberizing corpus $out @ ".`date`;
-    if (-e $out) {
-        print STDERR "  $out already in place, reusing\n";
-        return;
-    }
-    open(IN_DE,$in_de) or die "ERROR: Can't read $in_de";
-    open(IN_EN,$in_en) or die "ERROR: Can't read $in_en";
-    open(OUT,">$out") or die "ERROR: Can't write $out";
-    while(my $de = <IN_DE>) {
-	my $en = <IN_EN>;
-	print OUT "1\n";
-	print OUT &numberize_line($VCB_EN,$en);
-	print OUT &numberize_line($VCB_DE,$de);
+  my ($VCB_DE,$in_de,$VCB_EN,$in_en,$out, $weightfile) = @_;
+  my %OUT;
+  print STDERR "(1.3) numberizing corpus $out @ ".`date`;
+  if (-e $out) {
+      print STDERR "  $out already in place, reusing\n";
+      return;
+  }
+  open(IN_DE,$in_de) or die "ERROR: Can't read $in_de";
+  open(IN_EN,$in_en) or die "ERROR: Can't read $in_en";
+  my $useWeights = 0;
+  if(open(IN_WEIGHT, $weightfile)) { $useWeights=1; }
+  open(OUT,">$out") or die "ERROR: Can't write $out";
+  while(my $de = <IN_DE>) {
+  my $en = <IN_EN>;
+  my $weight = 1;
+  if($useWeights)
+  {
+    $weight = <IN_WEIGHT>;
+    $weight =~ s/\s+$//;
+  }
+  print OUT "$weight\n";
+  print OUT &numberize_line($VCB_EN,$en);
+  print OUT &numberize_line($VCB_DE,$de);
     }
     close(IN_DE);
     close(IN_EN);
@@ -1257,7 +1266,7 @@ sub run_single_giza {
 	 nodumps => 1 ,
 	 onlyaldumps => 1 ,
 	 nsmooth => 4 ,
-         model1dumpfrequency => 1,
+     model1dumpfrequency => 1,
 	 model4smoothfactor => 0.4 ,
 	 t => $vcb_f,
          s => $vcb_e,
@@ -1409,8 +1418,17 @@ sub word_align {
 	  "-final=\"$__symal_f\" -both=\"$__symal_b\" > ".
 	  "$___ALIGNMENT_FILE.$___ALIGNMENT")
       ||
-       die "ERROR: Can't generate symmetrized alignment file\n"
+       die "ERROR: Can't generate symmetrized alignment file\n";
 
+    foreach my $factor (split(/\+/,$___TRANSLATION_FACTORS)) {
+      my ($factor_f,$factor_e) = split(/\-/,$factor);
+      &reduce_factors($___CORPUS.".".$___F,
+          $___ALIGNMENT_STEM.".".$factor_f.".".$___F,
+          $factor_f);
+      &reduce_factors($___CORPUS.".".$___E,
+          $___ALIGNMENT_STEM.".".$factor_e.".".$___E,
+          $factor_e);
+    }
 }
 
 ### (4) BUILDING LEXICAL TRANSLATION TABLE
@@ -1432,12 +1450,12 @@ sub get_lexical_factored {
 	foreach my $factor (split(/\+/,$___TRANSLATION_FACTORS)) {
 	    print STDERR "(4) [$factor] generate lexical translation table @ ".`date`;
 	    my ($factor_f,$factor_e) = split(/\-/,$factor);
-	    &reduce_factors($___CORPUS.".".$___F,
-			    $___ALIGNMENT_STEM.".".$factor_f.".".$___F,
-			    $factor_f);
-	    &reduce_factors($___CORPUS.".".$___E,
-			    $___ALIGNMENT_STEM.".".$factor_e.".".$___E,
-			    $factor_e);
+# 	    &reduce_factors($___CORPUS.".".$___F,
+# 			    $___ALIGNMENT_STEM.".".$factor_f.".".$___F,
+# 			    $factor_f);
+# 	    &reduce_factors($___CORPUS.".".$___E,
+# 			    $___ALIGNMENT_STEM.".".$factor_e.".".$___E,
+# 			    $factor_e);
 	    my $lexical_file = $___LEXICAL_FILE;
 	    $lexical_file .= ".".$factor if !$___NOT_FACTORED;
 	    &get_lexical($___ALIGNMENT_STEM.".".$factor_f.".".$___F,
@@ -2133,6 +2151,16 @@ sub create_ini {
        }
      }
 
+     if($basic_weight_count == 0 && $phrase_table_impl == 0) { # find out the number of features directly from the table
+       my $peekLine = `zcat -f $file | head -n 1`;
+       my @fields = split('\|+', $peekLine);
+       my $scoreline = $fields[2];
+       $scoreline =~ s/^\s*//;
+       $scoreline =~ s/\s*$//;
+       my @scores = split('\s+', $scoreline);
+       $basic_weight_count = scalar(@scores);
+     }
+
      # name of type
      my $phrase_table_impl_name = "UnknownPtImplementation";
      $phrase_table_impl_name = "PhraseDictionaryMemory" if $phrase_table_impl==0;
@@ -2315,12 +2343,12 @@ sub create_ini {
 
     my $lm_oov_prob = 0.1;
     my $lm_extra_options = "";
-    
+
     if ($_POST_DECODING_TRANSLIT || $_TRANSLITERATION_PHRASE_TABLE){
 	$lm_oov_prob = -100.0;
 	$_LMODEL_OOV_FEATURE = "yes";
     }
-    
+
     if ($_LMODEL_OOV_FEATURE) {
         # enable language model OOV feature
         $lm_extra_options = " oov-feature=1";

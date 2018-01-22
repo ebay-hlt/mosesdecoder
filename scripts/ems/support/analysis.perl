@@ -657,6 +657,7 @@ sub precision_by_coverage {
 	$DELETED_BY_COVERAGE{$coverage} += $deleted;
 	$PREC_BY_COVERAGE{$coverage} += $precision;
 	$LENGTH_BY_COVERAGE{$coverage} += $length;
+
 	$TOTAL_BY_COVERAGE{$coverage}++;
 
 	if ($precision_by_coverage_factor) {
@@ -665,6 +666,7 @@ sub precision_by_coverage {
 	  $PREC_BY_FACTOR{$FACTOR[$i]} += $precision;
 	  $PREC_BY_FACTOR_COVERAGE{$FACTOR[$i]}{$coverage} += $precision;
 	  $LENGTH_BY_FACTOR{$FACTOR[$i]} += $length;
+
 	  $LENGTH_BY_FACTOR_COVERAGE{$FACTOR[$i]}{$coverage} += $length;
 	  $TOTAL_BY_FACTOR{$FACTOR[$i]}++;
 	  $TOTAL_BY_FACTOR_COVERAGE{$FACTOR[$i]}{$coverage}++;
@@ -782,7 +784,7 @@ sub hs_scan_line {
     if ($line =~ /^Trans Opt/) {
         # Old format
         $line =~ /^Trans Opt (\d+) \[(\d+)\.\.(\d+)\]: (.+)  : (\S+) \-\>(.+) :([\(\),\d\- ]*): pC=[\d\.\-e]+, c=/ ||
-        $line =~ /^Trans Opt (\d+) \[(\d+)\.\.(\d+)\]: (.+)  : (\S+) \-\>\S+  \-\> (.+) :([\(\),\d\- ]*): c=/ || 
+        $line =~ /^Trans Opt (\d+) \[(\d+)\.\.(\d+)\]: (.+)  : (\S+) \-\>\S+  \-\> (.+) :([\(\),\d\- ]*): c=/ ||
         $line =~ /^Trans Opt (\d+) \[(\d+)\.\.(\d+)\]: (.+)  : (\S+) \-\>\S+  \-\> (.+) :([\(\),\d\- ]*): term=.*: nonterm=.*: c=/ || return 0;
         my ($sentence,$start,$end,$spans,$rule_lhs,$rule_rhs,$alignment) = ($1,$2,$3,$4,$5,$6,$7);
 
@@ -896,6 +898,7 @@ sub hs_process {
 	$CHART{$$RULE{'start'}}{$$RULE{'end'}} = $RULE;
     }
 
+    
     # compute depth
     &hs_compute_depth(1,$max,0,\%CHART);
     my $max_depth = 0;
@@ -906,6 +909,7 @@ sub hs_process {
     &hs_recompute_depth(1,$max,\%CHART,$max_depth);
     $$STATS{'depth'} += $max_depth;
 
+    
     # build matrix of divs
 
     my @MATRIX;
@@ -925,6 +929,7 @@ sub hs_process {
     }
     &hs_get_children(1,$max,\%CHART);
 
+    
     foreach my $RULE (@{$DERIVATION}) {
 	next unless defined($$RULE{'start_div'}); # better: delete offending rule S -> S <s>
 
@@ -989,6 +994,7 @@ sub hs_output_matrix {
 sub hs_rule_type {
     my ($RULE) = @_;
 
+    
     my $type = "";
 
     # output side
@@ -1002,6 +1008,7 @@ sub hs_rule_type {
 	    $word_count = 0;
 	    my $nt = chr(97+$nt_count++);
 	    $NT{$$RULE{'alignment'}{$i}} = $nt;
+
 	    $type .= $nt;
 	}
 	else {
@@ -1011,6 +1018,7 @@ sub hs_rule_type {
     }
     $type .= $word_count if $word_count > 0;
 
+    
     $type .= ":".$total_word_count.":".$nt_count.":";
 
     # input side
@@ -1043,7 +1051,6 @@ sub hs_compute_depth {
     my $RULE = $$CHART{$start}{$end};
 
     $$RULE{'depth'} = $depth;
-
     for(my $i=0;$i<scalar @{$$RULE{'rule_rhs'}};$i++) {
 	# non-terminals
 	if (defined($$RULE{'alignment'}{$i})) {
@@ -1061,7 +1068,6 @@ sub hs_recompute_depth {
       return 0;
     }
     my $RULE = $$CHART{$start}{$end};
-
     my $min_sub_depth = $max_depth+1;
     for(my $i=0;$i<scalar @{$$RULE{'rule_rhs'}};$i++) {
 	# non-terminals
@@ -1084,6 +1090,7 @@ sub hs_get_children {
     }
     my $RULE = $$CHART{$start}{$end};
 
+    
     my @CHILDREN = ();
     $$RULE{'children'} = \@CHILDREN;
 
@@ -1095,6 +1102,7 @@ sub hs_get_children {
 	    push @CHILDREN, $child unless $child == -1;
 	}
     }
+
     return $$RULE{'id'};
 }
 
@@ -1106,7 +1114,6 @@ sub hs_create_out_span {
       return;
     }
     my $RULE = $$CHART{$start}{$end};
-
     my %SPAN;
     $SPAN{'start'} = $start;
     $SPAN{'end'} = $end;
@@ -1134,6 +1141,7 @@ sub hs_create_out_span {
 		$SPAN{'end'} = $end;
 		$SPAN{'depth'} = $$RULE{'depth'};
 		push @{$MATRIX},\%SPAN;
+
 		$THIS_SPAN = \%SPAN;
 	    }
 	    $$THIS_SPAN{'rhs'} .= " " if defined($$THIS_SPAN{'rhs'});
@@ -1154,7 +1162,6 @@ sub hs_create_in_span {
       return;
     }
     my $RULE = $$CHART{$start}{$end};
-
     my %SPAN;
     $SPAN{'start'} = $start;
     $SPAN{'end'} = $end;
@@ -1164,7 +1171,6 @@ sub hs_create_in_span {
     push @{$MATRIX},\%SPAN;
     $$RULE{'start_div_in'} = $#{$MATRIX};
     my $THIS_SPAN = \%SPAN;
-
     my $terminal = 1;
     # in input order ...
     for(my $i=0;$i<scalar(@{$$RULE{'spans'}});$i++) {
@@ -1181,6 +1187,7 @@ sub hs_create_in_span {
 		$SPAN{'end'} = $end;
 		$SPAN{'depth'} = $$RULE{'depth'};
 		push @{$MATRIX},\%SPAN;
+
 		$THIS_SPAN = \%SPAN;
 	    }
 	    $$THIS_SPAN{'rhs'} .= " " if defined($$THIS_SPAN{'rhs'});
@@ -1203,12 +1210,13 @@ sub process_search_graph {
     if (/^(\d+) (\d+)\-?\>?(\S*) (\S+) =\> (.+) :(.*): pC=([\de\-\.]+), c=([\de\-\.]+) \[(\d+)\.\.(\d+)\] (.*)\[total=([\d\-\.]+)\] \<\</) {
       ($sentence,$id,$recomb,$lhs,$output,$alignment,$rule_score,$heuristic_rule_score,$from,$to,$children,$hyp_score) = ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12);
     }
-    elsif (/^(\d+) (\d+)\-?\>?(\S*) (\S+) =\> (.+) :(.*): c=([\de\-\.]+) \[(\d+)\.\.(\d+)\] (.*)\[total=([\de\-\.]+)\] core/ || 
+    elsif (/^(\d+) (\d+)\-?\>?(\S*) (\S+) =\> (.+) :(.*): c=([\de\-\.]+) \[(\d+)\.\.(\d+)\] (.*)\[total=([\de\-\.]+)\] core/ ||
     /^(\d+) (\d+)\-?\>?(\S*) (\S+) =\> (.+) :(.*): c=([\de\-\.]+) core=\(.*\)  \[(\d+)\.\.(\d+)\] (.*)\[total=([\de\-\.]+)\] core/) {
       ($sentence,$id,$recomb,$lhs,$output,$alignment,$rule_score,$from,$to,$children,$hyp_score) = ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12);
       $heuristic_rule_score = $rule_score; # hmmmm....
     }
     else {
+
       die("ERROR: buggy search graph line: $_");
     }
     chop($alignment) if $alignment;
