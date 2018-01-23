@@ -16,12 +16,16 @@ binmode(STDOUT, ":utf8");
 my ($DIR,$CORPUS,$SCRIPTS_ROOT_DIR,$CONFIG,$HELP,$ERROR);
 my $LM = "KENLM"; # KENLM is default.
 my $BUILD_LM = "build-lm.sh";
+my $BUILD_KENLM = "$Bin/../../bin/lmplz";
+my $BUILD_BINARY = "$Bin/../../bin/build_binary";
+my $EXTRACT = "$Bin/../../bin/extract";
+my $SCORE = "$Bin/../../bin/score";
+my $CONSOLIDATE_DIRECT = "$Bin/../../bin/consolidate-direct";
 my $NGRAM_COUNT = "ngram-count";
-my $KENLM_DIR = dirname("$0") . "/../../bin";
 my $KENLM_MEM = "80%";
 my $KENLM_TYPE = "probing";
 my $TMPDIR = $ENV{"TMPDIR"};
-my $TRAIN_SCRIPT = "train-factored-phrase-model.perl";
+my $TRAIN_SCRIPT = "$Bin/../training/train-model.perl";
 my $MAX_LEN = 1;
 my $FIRST_STEP = 1;
 my $LAST_STEP = 11;
@@ -33,7 +37,7 @@ $ERROR = "training Aborted."
                        'dir=s' => \$DIR,
                        'ngram-count=s' => \$NGRAM_COUNT,
                        'build-lm=s' => \$BUILD_LM,
-                       'kenlm-dir=s' => \$KENLM_DIR,
+                       'build-kenlm=s' => \$BUILD_KENLM,
                        'kenlm-mem=s' => \$KENLM_MEM,
                        'kenlm-type=s' => \$KENLM_TYPE,
                        'lm=s' => \$LM,
@@ -44,7 +48,7 @@ $ERROR = "training Aborted."
 
 # check and set default to unset parameters
 $ERROR = "please specify working dir --dir" unless defined($DIR) || defined($HELP);
-$ERROR = "please specify --corpus" if !defined($CORPUS) && !defined($HELP) 
+$ERROR = "please specify --corpus" if !defined($CORPUS) && !defined($HELP)
                                   && $FIRST_STEP <= 2 && $LAST_STEP >= 1;
 
 my $KENLM_OPTS = "probing";
@@ -80,9 +84,6 @@ if ($HELP || $ERROR) {
   --lm=[IRSTLM,SRILM,KENLM] ... language model (default: KENLM).
   --build-lm=file           ... path to build-lm.sh if not in \$PATH (used only with --lm=IRSTLM).
   --ngram-count=file        ... path to ngram-count.sh if not in \$PATH (used only with --lm=SRILM).
-  --kenlm-dir=path          ... path with lmplz/build_binary (used only with --lm=KENLM).
-  --kenlm-mem=mem           ... memory to reserve for KenLM binaries (% or G).
-  --kenlm-type=type         ... KenLM type. One of 'probing', 'trie', 'trie-a22', 'trie-q8', 'trie-q8-a22'
 
   = Steps this script will perform =
   (1) Truecasing;
@@ -133,23 +134,22 @@ sub train_lm {
     print STDERR "(2) Train language model on cased data @ ".`date`;
     my $cmd = "";
     if (uc $LM eq "IRSTLM") {
-        $cmd = "$BUILD_LM -s improved-kneser-ney -i $CORPUS -n 3 -o $DIR/cased.irstlm.gz";
+        $cmd = "$BUILD_LM -t /tmp -i $CORPUS -n 3 -o $DIR/cased.irstlm.gz";
     }
-    elsif (uc $LM eq "IRSTLM") {
+    elsif (uc $LM eq "SRILM") {
         $LM = "SRILM";
         $cmd = "$NGRAM_COUNT -text $CORPUS -lm $DIR/cased.srilm.gz -interpolate -kndiscount";
     }
-    elsif (uc $LM eq "KENLM") {
-        $LM = "KENLM";
-        $cmd = "$KENLM_DIR/lmplz -T $TMPDIR --memory $KENLM_MEM --text $CORPUS --arpa $DIR/cased.arpa --order 3 && $KENLM_DIR/build_binary -T $TMPDIR -S $KENLM_MEM $KENLM_OPTS $DIR/cased.arpa $DIR/cased.ken ; gzip -f $DIR/cased.arpa";
-    }
     else {
-        print STDERR "** Unknown LM type: $LM **" . "\n";
-        exit(-1);
+        $LM = "KENLM";
+        $cmd = "$BUILD_KENLM --prune 0 0 1 -S $KENLM_MEM -T $DIR/lmtmp --order 3 --text $CORPUS --arpa $DIR/cased.kenlm.arpa.gz";
     }
     print STDERR "** Using $LM **" . "\n";
     print STDERR $cmd."\n";
     system($cmd) == 0 || die("Language model training failed with error " . ($? >> 8) . "\n");
+    if ($LM eq "KENLM") {
+      system("$BUILD-T $TMPDIR -S $KENLM_MEM _BINARY -T $TMPDIR -S $KENLM_MEM $KENLM_TYPE $DIR/cased.kenlm.arpa.gz $DIR/cased.kenlm ; rm $DIR/cased.kenlm.arpa.gz");
+    }
 }
 
 sub prepare_data {
@@ -162,13 +162,8 @@ sub prepare_data {
     open(LOWERCASED,">$DIR/aligned.lowercased");
     binmode(LOWERCASED, ":utf8");
     open(ALIGNMENT,">$DIR/aligned.a");
-    my $skipped = 0;
-    my $max_len = 2000;
     while(<CORPUS>) {
-	if (length($_) > $max_len) {
-          $skipped++;
-          next;
-        }
+	next if length($_)>2000;
 	s/\x{0}//g;
 	s/\|//g;
 	s/ +/ /g;
@@ -184,9 +179,6 @@ sub prepare_data {
 	}
 	print ALIGNMENT "\n";
     }
-    if ($skipped > 0) {
-      print STDERR "warning: skipped $skipped entries of length >$max_len\n";
-    }
     close(CORPUS);
     close(CASED);
     close(LOWERCASED);
@@ -194,10 +186,29 @@ sub prepare_data {
 }
 
 sub train_recase_model {
+    print STDERR "\n(4) Training recasing model @ ".`date`;
     my $first = $FIRST_STEP;
     $first = 4 if $first < 4;
-    print STDERR "\n(4) Training recasing model @ ".`date`;
+    if ($MAX_LEN == 1) {
+       my $cmd = "$EXTRACT $DIR/aligned.cased $DIR/aligned.lowercased $DIR/aligned.a $DIR/extract 1";
+       system($cmd) == 0 || die("ERROR: extract (special case max-len 1) failed: $cmd");
+       $cmd = "sort -S 2G $DIR/extract > $DIR/extract.sorted";
+       system($cmd) == 0 || die("ERROR: sort extract (special case max-len 1) failed: $cmd");
+       $cmd = "$SCORE $DIR/extract.sorted /dev/null $DIR/phrase-table-half --NoLex";
+       system($cmd) == 0 || die("ERROR: score (special case max-len 1) failed: $cmd");
+       $cmd = "$CONSOLIDATE_DIRECT $DIR/phrase-table-half $DIR/phrase-table";
+       system($cmd) == 0 || die("ERROR: consolidate-direct (special case max-len 1) failed: $cmd");
+       system("rm $DIR/phrase-table-half");
+       system("gzip $DIR/phrase-table");
+       $first = 9;
+    }
     my $cmd = "$TRAIN_SCRIPT --root-dir $DIR --model-dir $DIR --first-step $first --alignment a --corpus $DIR/aligned --f lowercased --e cased --max-phrase-length $MAX_LEN";
+    if ($MAX_LEN == 1) {
+      $cmd .= " --score-options='--NoLex --OnlyDirect'";
+    }
+    else {
+      $cmd .= " --score-options='--OnlyDirect'";
+    }
     if (uc $LM eq "IRSTLM") {
         $cmd .= " --lm 0:3:$DIR/cased.irstlm.gz:1";
     }
