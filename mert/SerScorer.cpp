@@ -81,7 +81,7 @@ void SerScorer::prepareStats(size_t sid, const string& text, ScoreStats& entry)
 
 float SerScorer::calculateScore(const vector<ScoreStatsType>& comps) const
 {
-  return comps[0] / float(comps[1]);
+  return 1.0f - (comps[0] / static_cast<float>(comps[1]));
 }
 
 }
