@@ -60,7 +60,7 @@ void SerScorer::prepareStats(size_t sid, const string& text, ScoreStats& entry)
     // we can only have a perfect match if the sentence length is equal
     if (testtokens.size() == ref.size()) {
       int errors = 0;
-      for (int tid = 0; tid < testtokens.size(); tid++) {
+      for (size_t tid = 0; tid < testtokens.size(); tid++) {
 	// token mismatch: error 1 w.r.t. this reference; move to next ref.
 	if (ref[tid] != testtokens[tid]) { 
 	  errors = 1;
@@ -69,19 +69,19 @@ void SerScorer::prepareStats(size_t sid, const string& text, ScoreStats& entry)
       }
       if (errors == 0) {
         n_ser = 0;
-	break;
+        break;
       }
     }
   }
   ostringstream stats;
-  stats << n_ser;
+  stats << n_ser << " " << 1; // sentence error (0 or 1), number of sentences (1)
   string stats_str = stats.str();
   entry.set(stats_str);
 }
 
 float SerScorer::calculateScore(const vector<ScoreStatsType>& comps) const
 {
-  return comps[0] / float(m_ref_sentences[0].size());
+  return comps[0] / float(comps[1]);
 }
 
 }

@@ -13,10 +13,8 @@ namespace MosesTuning
 class ScoreStats;
 
 /**
- * An implementation of position-independent word error rate.
- * This is defined as
- *   1 - (correct - max(0,output_length - ref_length)) / ref_length
- * In fact, we ignore the " 1 - " so that it can be maximised.
+ * An implementation of sentence error rate.
+ * This is defined as 0 if the sentences are identical and 1 otherwise.
  */
 class SerScorer: public StatisticsBasedScorer
 {
@@ -27,7 +25,7 @@ public:
   virtual void setReferenceFiles(const std::vector<std::string>& referenceFiles);
   virtual void prepareStats(std::size_t sid, const std::string& text, ScoreStats& entry);
   virtual std::size_t NumberOfScores() const {
-    return 1;
+    return 2;
   }
   virtual float calculateScore(const std::vector<ScoreStatsType>& comps) const;
 
@@ -37,7 +35,6 @@ private:
   SerScorer& operator=(const SerScorer&);
 
   typedef std::vector<int> sent_t;
-  std::vector<std::size_t> m_ref_lengths;
   std::vector<std::vector<sent_t> > m_ref_sentences;
 };
 
