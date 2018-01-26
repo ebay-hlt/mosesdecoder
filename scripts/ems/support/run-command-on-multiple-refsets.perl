@@ -26,6 +26,34 @@ for(my $i=0;$i<scalar(@inputfiles);$i++)
     unless (-e "$in.ref0" || -e $in."0");
 }
 
+my $cat_all_refs = 0;
+if($cmd =~ /^REFCAT/) # cat all reference files into one file besides doing what is in the command
+{
+  my $single_cmd = $cmd;
+  $single_cmd =~ s/^REFCAT\s*//;
+  $cat_all_refs = 1;
+  my $list="";
+  for(my $i=0;-e $inputfiles[0].".ref$i" || -e $inputfiles[0]."$i";$i++) {
+    for(my $k=0;$k<scalar(@inputfiles);$k++)
+    {
+      my $in = $inputfiles[$k];
+      if (! -e "$in.ref$i")
+      {
+        if(-e "$in$i") { $list .= " $in$i"; }
+        else { $list .= " $in.ref0"; }
+      }
+      else { $list .= " $in.ref$i"; }
+    }
+  }
+  $list =~ s/^ //;
+  $single_cmd =~ s/mref-input-file/$list/g;
+  $single_cmd =~ s/mref-output-file/$out/g;
+  print STDERR "$single_cmd\n";
+  system($single_cmd);
+  exit;
+}
+
+# normal case where multiple references are processed separately
 for(my $i=0;-e $inputfiles[0].".ref$i" || -e $inputfiles[0]."$i";$i++) {
     my $single_cmd = $cmd;
     my $list="";

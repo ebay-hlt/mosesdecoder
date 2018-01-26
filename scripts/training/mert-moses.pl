@@ -177,6 +177,7 @@ my $___DEV_SYMAL = undef;
 my $dev_symal_abs = undef;
 my $working_dir_abs = undef;
 my $nbestpostprocessscript = "";  #perform postprocessing on nbest lists before scoring
+my $ppSuffix = "";
 my $___TESTSETS = "";             #test sets to be translated when mert is done
 
 use Getopt::Long;
@@ -440,6 +441,9 @@ else {
   $___MERT_OBJFUNC = "BLEU";
 }
 
+if($nbestpostprocessscript) {
+  $ppSuffix=".post";
+}
 
 # handling reference lengh strategy
 $scconfig .= &setup_reference_length_type();
@@ -836,9 +840,7 @@ while (1) {
       $lsamp_file      = "$lsamp_file.gz";
       $nbest_file      = "$combined_file";
     }
-    my $ppSuffix = "";
     if ($nbestpostprocessscript) {
-        $ppSuffix = ".post";
         safesystem("$nbestpostprocessscript $nbest_file > $nbest_file$ppSuffix") or die "Failed to postprocess $nbest_file: $!";
     }
     safesystem("gzip -f $nbest_file$ppSuffix") or die "Failed to gzip run*out" unless $___HG_MIRA;
@@ -1165,9 +1167,7 @@ if($___RETURN_BEST_DEV) {
   my $evalout = "eval.out";
   for (my $i = 1; $i < $run; $i++) {
     my $candidate = "run$i.out";
-    my $ppSuffix = "";
     if($nbestpostprocessscript) {
-      $ppSuffix = ".post";
       safesystem("$nbestpostprocessscript run$i.out | gzip > run$i.out$ppSuffix") or die "Failed to postprocess run$i.out";
     }
     if ($___HG_MIRA) {

@@ -22,7 +22,10 @@ $TYPE{"bolt-bleu"}     = "BLEU";
 $TYPE{"bolt-bleu-c"}   = "BLEU-c";
 $TYPE{"bolt-ter"}      = "TER";
 $TYPE{"bolt-ter-c"}    = "TER-c";
-
+$TYPE{"bleu"} = "BLEU";
+$TYPE{"ter"} = "TER";
+$TYPE{"wer"} = "WER";
+$TYPE{"per"} = "PER";
 $TYPE{"multi-bleu-detok"}  = "BLEU";
 $TYPE{"multi-bleu-c-detok"}= "BLEU-c";
 
@@ -58,6 +61,9 @@ sub process {
     $SCORE{$set} .= "; " if defined($SCORE{$set});
     if (! -e $file) {
 	print STDERR "ERROR (score $type for set $set): file '$file' does not exist!\n";
+    }
+    elsif ($type eq 'bleu' || $type eq 'ter') {
+      $SCORE{$set} .= &extract_unknown_score($file, $type)." ";
     }
     elsif ($type eq 'nist-bleu' || $type eq 'nist-bleu-c') {
 	$SCORE{$set} .= &extract_nist_bleu($file,$type)." ";
@@ -143,6 +149,18 @@ sub extract_bolt {
   $AVERAGE{"bolt-".$type} += $score*100;
   return $output.$TYPE{"bolt-".$type};
 }
+
+sub extract_unknown_score {
+  my ($file,$type) = @_;
+  my $score;
+  foreach (`cat $file`) {
+    $score = $1 if /\s*([\d\.]+)\s*$/;
+  }
+  my $output = sprintf("%.02f ",$score*100);
+  $AVERAGE{$type} += $score*100;
+  return $output.$TYPE{$type};
+}
+
 sub extract_meteor {
     my ($file,$type) = @_;
     my ($meteor, $precision);

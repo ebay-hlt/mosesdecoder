@@ -24,6 +24,8 @@ my $CONSOLIDATE_DIRECT = "$Bin/../../bin/consolidate-direct";
 my $NGRAM_COUNT = "ngram-count";
 my $KENLM_MEM = "80%";
 my $KENLM_TYPE = "probing";
+my $BUILD_BINARY_OPTS = "probing";
+my $KENLM_OPTS = "";
 my $TMPDIR = $ENV{"TMPDIR"};
 my $TRAIN_SCRIPT = "$Bin/../training/train-model.perl";
 my $MAX_LEN = 1;
@@ -40,6 +42,7 @@ $ERROR = "training Aborted."
                        'build-kenlm=s' => \$BUILD_KENLM,
                        'kenlm-mem=s' => \$KENLM_MEM,
                        'kenlm-type=s' => \$KENLM_TYPE,
+                       'kenlm-opts=s' => \$KENLM_OPTS,
                        'lm=s' => \$LM,
                        'train-script=s' => \$TRAIN_SCRIPT,
                        'scripts-root-dir=s' => \$SCRIPTS_ROOT_DIR,
@@ -51,15 +54,14 @@ $ERROR = "please specify working dir --dir" unless defined($DIR) || defined($HEL
 $ERROR = "please specify --corpus" if !defined($CORPUS) && !defined($HELP)
                                   && $FIRST_STEP <= 2 && $LAST_STEP >= 1;
 
-my $KENLM_OPTS = "probing";
 if ( $KENLM_TYPE =~ /trie/ ) {
-   $KENLM_OPTS = "trie";
+   $BUILD_BINARY_OPTS = "trie";
 }
 if ( $KENLM_TYPE =~ /-q(\d+)/ ) {
-   $KENLM_OPTS .= " -q " . $1;
+   $BUILD_BINARY_OPTS .= " -q " . $1;
 }
 if ( $KENLM_TYPE =~ /-a(\d+)/ ) {
-   $KENLM_OPTS .= " -a " . $1;
+   $BUILD_BINARY_OPTS .= " -a " . $1;
 }
 
 if ($HELP || $ERROR) {
@@ -142,14 +144,12 @@ sub train_lm {
     }
     else {
         $LM = "KENLM";
-        $cmd = "$BUILD_KENLM --prune 0 0 1 -S $KENLM_MEM -T $DIR/lmtmp --order 3 --text $CORPUS --arpa $DIR/cased.kenlm.arpa.gz";
+        $cmd = "$BUILD_KENLM $KENLM_OPTS -T $TMPDIR -S $KENLM_MEM --text $CORPUS --arpa $DIR/cased.kenlm.arpa.gz --order 3 && $BUILD_BINARY -T $TMPDIR -S $KENLM_MEM $BUILD_BINARY_OPTS $DIR/cased.kenlm.arpa.gz $DIR/cased.kenlm";
+        # $cmd = "$BUILD_KENLM --prune 0 0 1 -S $KENLM_MEM -T $DIR/lmtmp --order 3 --text $CORPUS --arpa $DIR/cased.kenlm.arpa.gz";
     }
     print STDERR "** Using $LM **" . "\n";
     print STDERR $cmd."\n";
     system($cmd) == 0 || die("Language model training failed with error " . ($? >> 8) . "\n");
-    if ($LM eq "KENLM") {
-      system("$BUILD-T $TMPDIR -S $KENLM_MEM _BINARY -T $TMPDIR -S $KENLM_MEM $KENLM_TYPE $DIR/cased.kenlm.arpa.gz $DIR/cased.kenlm ; rm $DIR/cased.kenlm.arpa.gz");
-    }
 }
 
 sub prepare_data {
