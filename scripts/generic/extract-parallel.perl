@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 #
 # This file is part of moses.  Its use is licensed under the GNU Lesser General
 # Public License version 2.1 or, at your option, any later version.
@@ -59,7 +59,7 @@ if ($isBSDSplit == 0) {
 	$splitCmdOption .= "-d";
 }
 
-my $gzOut = 0; 
+my $gzOut = 0;
 
 for (my $i = 8; $i < $#ARGV + 1; ++$i)
 {
@@ -135,6 +135,7 @@ else
   my $numStr = NumStr(0);
 
   $cmd = "ln -s $target $TMPDIR/target.$numStr";
+	print STDERR "Executing: $cmd \n";
 	`$cmd`;
 
   $cmd = "ln -s $source $TMPDIR/source.$numStr";

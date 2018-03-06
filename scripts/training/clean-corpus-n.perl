@@ -16,11 +16,14 @@ my $enc = "utf8"; # encoding of the input and output files
 my $max_word_length = 1000; # any segment with a word (or factor) exceeding this length in chars
     # is discarded; motivated by symal.cpp, which has its own such parameter (hardcoded to 1000)
     # and crashes if it encounters a word that exceeds it
+my $add_senttags = 0;
+
 my $ratio = 9;
 
 GetOptions(
   "help" => \$help,
   "lowercase|lc" => \$lc,
+  "senttags" => \$add_senttags,
   "encoding=s" => \$enc,
   "ratio=f" => \$ratio,
   "ignore-ratio" => \$ignore_ratio,
@@ -119,6 +122,13 @@ while(my $f = <F>) {
 
   my $ec = &word_count($e);
   my $fc = &word_count($f);
+  if($add_senttags && ($ec > 3) && ($fc > 3) && ($f =~ /(\p{P}|[¶])\s*$/) && ($e =~ /(\p{P}|[¶])\s*$/))
+  {
+    $f = "<s> $f </s>";
+    $e = "<s> $e </s>";
+    $ec = $ec + 2;
+    $fc = $fc + 2;
+  }
   next if $ec > $max;
   next if $fc > $max;
   next if $ec < $min;

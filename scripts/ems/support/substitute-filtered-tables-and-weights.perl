@@ -17,7 +17,12 @@ my $origPath = $ARGV[1];
 my $tunedPath = $ARGV[2];
 my $outPath = $ARGV[3];
 
-my $tempPath = "/tmp/moses.ini.$$";
+my $tmpdir = $ENV{"TMPDIR"};
+if(!($tmpdir =~ /\S/))
+{
+  $tmpdir="/tmp";
+}
+my $tempPath = "$tmpdir/moses.ini.$$";
 
 print STDERR "filteredPath=$filteredPath \n";
 print STDERR "origPath=$origPath \n";
