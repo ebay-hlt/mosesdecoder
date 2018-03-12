@@ -92,6 +92,7 @@ my $___RANDOM_DIRECTIONS = 0; # search in random directions only
 my $___NUM_RANDOM_DIRECTIONS = 0; # number of random directions, also works with default optimizer [Cer&al.,2008]
 my $___RANDOM_RESTARTS = 20;
 my $___RETURN_BEST_DEV = 0; # return the best weights according to dev, not the last
+my $___MERT_OBJFUNC = undef; # default objective function
 
 # Flags related to PRO (Hopkins & May, 2011)
 my $___PAIRWISE_RANKED_OPTIMIZER = 0; # flag to enable PRO.
@@ -175,6 +176,9 @@ my $___MOSES_SIM_PE = "$SCRIPTS_ROOTDIR/generic/moses_sim_pe.py";
 my $___DEV_SYMAL = undef;
 my $dev_symal_abs = undef;
 my $working_dir_abs = undef;
+my $nbestpostprocessscript = "";  #perform postprocessing on nbest lists before scoring
+my $ppSuffix = "";
+my $___TESTSETS = "";             #test sets to be translated when mert is done
 
 use Getopt::Long;
 GetOptions(
@@ -232,7 +236,10 @@ GetOptions(
   "promix-table=s" => \@__PROMIX_TABLES,
   "threads=i" => \$__THREADS,
   "spe-symal=s" => \$___DEV_SYMAL,
-  "multi-moses" => \$___USE_MULTI_MOSES
+  "multi-moses" => \$___USE_MULTI_MOSES,
+  "objfunc=s" => \$___MERT_OBJFUNC,
+  "nbestpostprocess:s" => \$nbestpostprocessscript,
+  "test:s" => \$___TESTSETS,
 ) or exit(1);
 
 # the 4 required parameters can be supplied on the command line directly
@@ -333,6 +340,9 @@ Options:
   --multi-moses          ... Use multiple instances of moses instead of threads for decoding
                              (Use with --decoder-flags='-threads N' to get N instances, each of
                               which uses a single thread (overrides threads in moses.ini))
+  --objfunc=[BLEU|TER|PER|WER|CDER|SEMPOS|HAMMING] ... objective function during optimization
+                                (default: the one specified in mertargs)
+  --nbestpostprocess=STRING ... script for nbest postprocessing before scoring
 ";
   exit 1;
 }
@@ -419,11 +429,21 @@ if ($mertargs =~ /\-\-scconfig(?:\s+|=)(.+?)(\s|$)/) {
 }
 
 my $sctype = "--sctype BLEU";
-if ($mertargs =~ /(\-\-sctype(?:\s+|=).+?)(\s|$)/) {
+if (defined $___MERT_OBJFUNC) {
+  $sctype = "--sctype $___MERT_OBJFUNC";
+}
+elsif ($mertargs =~ /(\-\-sctype(?:\s+|=)(.+?))(\s|$)/) {
   $sctype = $1;
-  $mertargs =~ s/(\-\-sctype(?:\s+|=)+.+?)(\s|$)//;
+  $___MERT_OBJFUNC = $2;
+  $mertargs =~ s/(\-\-sctype(?:\s+|=).+?)(\s|$)//;
+}
+else {
+  $___MERT_OBJFUNC = "BLEU";
 }
 
+if($nbestpostprocessscript) {
+  $ppSuffix=".post";
+}
 
 # handling reference lengh strategy
 $scconfig .= &setup_reference_length_type();
@@ -820,10 +840,13 @@ while (1) {
       $lsamp_file      = "$lsamp_file.gz";
       $nbest_file      = "$combined_file";
     }
-    safesystem("gzip -f $nbest_file") or die "Failed to gzip run*out" unless $___HG_MIRA;
-    $nbest_file = $nbest_file.".gz";
+    if ($nbestpostprocessscript) {
+        safesystem("$nbestpostprocessscript $nbest_file > $nbest_file$ppSuffix") or die "Failed to postprocess $nbest_file: $!";
+    }
+    safesystem("gzip -f $nbest_file$ppSuffix") or die "Failed to gzip run*out" unless $___HG_MIRA;
+    $nbest_file = $nbest_file.$ppSuffix.".gz";
   } else {
-    $nbest_file = "run$run.best$___N_BEST_LIST_SIZE.out.gz";
+    $nbest_file = "run$run.best$___N_BEST_LIST_SIZE.out$ppSuffix.gz";
     print "skipped decoder run $run\n";
     $skip_decoder = 0;
     $need_to_normalize = 0;
@@ -1143,14 +1166,17 @@ if($___RETURN_BEST_DEV) {
   my $bestbleu=0;
   my $evalout = "eval.out";
   for (my $i = 1; $i < $run; $i++) {
-    my $candidate;
+    my $candidate = "run$i.out";
+    if($nbestpostprocessscript) {
+      safesystem("$nbestpostprocessscript run$i.out | gzip > run$i.out$ppSuffix") or die "Failed to postprocess run$i.out";
+    }
     if ($___HG_MIRA) {
       die "File not found: run$i.out" unless -r "run$i.out";
-      $candidate = "--candidate run$i.out";
+      $candidate = "--candidate run$i.out$ppSuffix";
     }
     else {
       die "File not found: run$i.best$___N_BEST_LIST_SIZE.out.gz" unless -r "run$i.best$___N_BEST_LIST_SIZE.out.gz";
-      $candidate = "--nbest run$i.best$___N_BEST_LIST_SIZE.out.gz";
+      $candidate = "--nbest run$i.best$___N_BEST_LIST_SIZE.out$ppSuffix.gz";
     }
     my $cmd = "$mert_eval_cmd --reference " . join(",", @references) . " $mert_extract_args $candidate";
     $cmd .= " -l $__REMOVE_SEGMENTATION" if defined( $__PROMIX_TRAINING);
@@ -1513,7 +1539,7 @@ sub create_config {
   my $outfn               = shift; # where to save the config
   my $featlist            = shift; # the lambdas we should write
   my $iteration           = shift;  # just for verbosity
-  my $bleu_achieved       = shift; # just for verbosity
+  my $score_achieved       = shift; # just for verbosity
   my $sparse_weights_file = shift; # only defined when optimizing sparse features
 
   my @keep_weights = ();
@@ -1558,7 +1584,7 @@ sub create_config {
   open my $out, '>', $outfn or die "Can't write $outfn: $!";
   print $out "# MERT optimized configuration\n";
   print $out "# decoder $___DECODER\n";
-  print $out "# BLEU $bleu_achieved on dev $___DEV_F\n";
+  print $out "# $___MERT_OBJFUNC $score_achieved on dev $___DEV_F\n";
   print $out "# We were before running iteration $iteration\n";
   print $out "# finished ".`date`;
 

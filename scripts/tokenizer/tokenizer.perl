@@ -254,8 +254,11 @@ sub tokenize
       $text =~ s,\Q$protected[$i], $subst ,g;
     }
     $text =~ s/ +/ /g;
-    $text =~ s/^ //g;
-    $text =~ s/ $//g;
+
+# NOTE: removing whitespace in the beginning and end leads to bugs: single apostrophes used as quotes are not detached
+# from the subsequent word!
+#    $text =~ s/^ //g;
+#    $text =~ s/ $//g;
 
     # seperate out all "other" special characters
     $text =~ s/([^\p{IsAlnum}\s\.\'\`\,\-])/ $1 /g;

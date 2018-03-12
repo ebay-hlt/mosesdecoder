@@ -30,7 +30,7 @@ die("ERROR: wrong syntax when invoking OSM-Train.perl")
 		       'order=i' => \$ORDER,
 		       'factor=s' => \$FACTOR,
 		       'input-extension=s' => \$INP_EXT,
-		       'output-extension=s' => \$OP_EXT,	
+		       'output-extension=s' => \$OP_EXT,
 		       'tune=s' => \$TUNE,
 		       'domain=s' => \$DOMAIN,
 		       'srilm-dir=s' => \$SRILM_DIR,
@@ -89,11 +89,11 @@ if (defined($FACTOR)) {
 
 	`$MOSES_SRC_DIR/scripts/training/reduce-factors.perl --corpus $TUNE.$INP_EXT --reduced $OUT_DIR/TUNE/tune.$INP_EXT --factor 0`;
 	`$MOSES_SRC_DIR/scripts/training/reduce-factors.perl --corpus $TUNE.$OP_EXT --reduced $OUT_DIR/TUNE/tune.$OP_EXT --factor 0`;
-	
+
 	create_interpolated_model($factor_val);
      }
      else
-     {		
+     {
        create_model($factor_val);
      }
   }
@@ -118,7 +118,7 @@ else {
 		 create_interpolated_model("");
      	}
      	else
-     	{		
+     	{
 	     create_model("");
      	}
 
@@ -143,7 +143,7 @@ sub read_domain_file{
 
 		push @corpora, $dom;
 		push @corpora, $num;
-		 
+
 	  	#print "$dom $num\n";
 	}
 
@@ -153,7 +153,7 @@ sub read_domain_file{
 
 sub create_interpolated_model{
 
-			
+
 	my ($factor_val) = @_;
 	my $fNum = 0;
 	my $dName;
@@ -165,7 +165,7 @@ sub create_interpolated_model{
 		$dName = "$OUT_DIR/$factor_val/$corpora[$i]";
 		$cmd = "mkdir $dName";
 		`$cmd`;
-		
+
 		my $cal = $corpora[$i+1] - $fNum;
 		$cmd = "head -$corpora[$i+1] $OUT_DIR/$factor_val/e | tail -$cal > $dName/e";
 		`$cmd`;
@@ -198,15 +198,15 @@ sub create_interpolated_model{
 			  print STDERR "Executing: $cmd\n";
 			  `$cmd`;
 		}
-	
+
 		print "$cmd\n";
 		$fNum = $corpora[$i+1];
 		$i = $i+2;
 	}
-	
+
 
 	`$MOSES_SRC_DIR/scripts/OSM/flipAlignment.perl $TUNE.align > $OUT_DIR/TUNE/tune.align`;
-	
+
 	print STDERR "Extracting Singletons\n";
 	$cmd = "$MOSES_SRC_DIR/scripts/OSM/extract-singletons.perl $OUT_DIR/TUNE/tune.$OP_EXT $OUT_DIR/TUNE/tune.$INP_EXT $OUT_DIR/TUNE/tune.align > $OUT_DIR/TUNE/Singletons";
 	print STDERR "Executing: $cmd\n";
@@ -228,11 +228,11 @@ sub create_interpolated_model{
 
 	while($i < scalar(@corpora))
 	{
-		$cmd = $cmd . ","; 	
+		$cmd = $cmd . ",";
 		$dName = "$OUT_DIR/$factor_val/$corpora[$i]/operationLM";
 		$cmd = $cmd . $dName;
 		$i = $i+2;
-	}	
+	}
 
 	print STDERR "Executing: $cmd\n";
 	`$cmd`;
@@ -240,7 +240,7 @@ sub create_interpolated_model{
 	print STDERR "Binarizing\n";
 	$cmd = "$MOSES_SRC_DIR/bin/build_binary $OUT_DIR/$factor_val/operationLM $OUT_DIR/$factor_val/operationLM.bin";
 	print STDERR "Executing: $cmd\n";
-	system($cmd) == 0 or die("system $cmd failed: $?");	
+	system($cmd) == 0 or die("system $cmd failed: $?");
 
 }
 

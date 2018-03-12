@@ -92,14 +92,14 @@ sub deleteEnglish{
 	{
 #		print "Both are Non-Latin\n";
 		if (m/[A-Za-z]/) {}
-		else {$backEng = 1; return $backEng;}
+		else {$backEng = 1;}
 	}
 	elsif($list[0] == 0 && $list[1] == 1)
 	{
 #		print "Target is Non-Latin\n";
 		@F=split("\t");
 		if ($F[1] =~ m/[A-Za-z]/) {}
-		else {$backEng = 1; return $backEng;}
+		else {$backEng = 1;}
 
 	}
 	elsif($list[0] == 1 && $list[1] == 0)
@@ -107,12 +107,30 @@ sub deleteEnglish{
 #		print "Source is Non-Latin\n";
 		@F=split("\t");
 		if ($F[0] =~ m/[A-Za-z]/) {}
-		else {$backEng = 1; return $backEng;}
+		else {$backEng = 1;}
 	}
+	return $backEng;
 }
 ###############################Delete Symbol##################################
 sub deleteSymbol{
+
 	$back = 0;
+	@wrds = split(/\t/);
+	$srcL = 3;
+	$trgL = 3;
+	if ($srcMark eq "zh")
+	{
+		$srcL = 2;
+		if ( $wrds[0] =~ m/(^\p{Han}+)$/ ) {}
+		else { return $back; }
+	}
+	elsif ($trgMark eq "zh")
+	{
+		$trgL = 2;
+		if ( $wrds[1] =~ m/(^\p{Han}+)$/ ) {}
+		else { return $back; }
+	}
+
 	if (/\d+/) {}
 	elsif(/\?/) {}
 	elsif(/\!/) {}
@@ -135,20 +153,19 @@ sub deleteSymbol{
 	elsif(/\>/){}
 	else
 	{
-		@wrds = split(/\t/);
 		if($wrds[0] eq $wrds[1])
 		{}
-		elsif(length $wrds[0] < 3 )
+		elsif(length $wrds[0] < $srcL )
 		{}
-		elsif(length $wrds[1] < 3)
+		elsif(length $wrds[1] < $trgL )
 		{}
 		else
 		{
 			$back = 1;
-			return $back;
 #			print "$_\n";
 		}
 	}
+	return $back;
 }
 #################################Char Frequency Filter Preprocess########################
 sub charFreqFilterPreprocess{
@@ -199,11 +216,20 @@ $srcOnePer = $bestsrcfreq * 0.005;
 
 $take = 0; # take top 30 character from hash
 
+if ($srcMark eq "zh")
+{
+	$maxChar = 4000;
+}
+else
+{
+	$maxChar = 30
+}
+
 foreach (@keys)
 	{
 #		print "$srcHash{$_}\t$_\n";
 
-		if($take < 30)
+		if($take < $maxChar)
 		{
 			$srcChar{$_} = 1;
 #			print "$srcHash{$_}\t$_\n";
@@ -211,7 +237,7 @@ foreach (@keys)
 		}
 		else
 		{ ################# take worst characters that are not 1% of the best character################
-			if($srcHash{$_} < $srcOnePer || $take > 50)
+			if($srcHash{$_} < $srcOnePer || $take > $maxChar+20)
 			{
 				$srcBadChar{$_} = 1;
 			}
@@ -228,17 +254,25 @@ $besttrgfreq = $trgHash{$keys[0]};
 $trgOnePer = $besttrgfreq * 0.005;
 
 #print "$besttrgfreq\t$trgOnePer\n";
+if ($trgMark eq "zh")
+{
+	$maxChar = 4000;
+}
+else
+{
+	$maxChar = 30
+}
 
 $take = 0; # take top 30 character from hash
 foreach (@keys)
 	{
-		if($take < 30)
+		if($take < $maxChar)
 		{
 			$trgChar{$_} = 1;
 		}
 		else
 		{ ################# take worst characters that are not 1% of the best character################
-			if($trgHash{$_} < $trgOnePer || $take > 50 )
+			if($trgHash{$_} < $trgOnePer || $take > $maxChar+20 )
 			{
 				$trgBadChar{$_} = 1;
 			}

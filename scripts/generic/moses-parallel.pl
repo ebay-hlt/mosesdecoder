@@ -323,7 +323,7 @@ sub getWordGraphParameters(){
 }
 
 sub getOOVParameters {
-  # only on command line 
+  # only on command line
   if ($oovlist) {
     if ($oovlist eq "-") {
       $oovfile = "oov";
@@ -600,7 +600,7 @@ sub preparing_script(){
 
   my $possibly_modified_cfgfile = $cfgfile;
   my $cache_model_cmd = "";
-  if ($cache_model) { 
+  if ($cache_model) {
     $cache_model_cmd = "MOSES_INI=`$RealBin/../ems/support/cache-model.perl $cfgfile $cache_model`\n";
     $possibly_modified_cfgfile = "\$MOSES_INI";
   }

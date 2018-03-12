@@ -39,6 +39,7 @@ while (defined $_) {
   print STDERR "($nr)" if $nr % 100000 == 0;
   chomp;
   s/\s+/ /g; s/^ //; s/ $//;
+  s/(<n.+?>\S+<\/n.>)/replaceSpaces($1)/ge;
   my @intokens = split / /;
   # load lines of corresponding streams and ensure equal number of words
   my @lines_of_extratoks;
@@ -58,6 +59,15 @@ while (defined $_) {
   for(my $i=0; $i<=$#intokens; $i++) {
     my $token = $intokens[$i];
     my @outtoken = ();
+    my $left="";
+    my $right="";
+    if($token =~ /^(<n.+?>)(\S+)(<\/n.>)$/)
+    {
+      $left = $1;
+      $right = $3;
+      $token = $2;
+      $left =~ s/_/ /g;
+    }
     push @outtoken, $token; # add the first one
     # print STDERR "Token: $token\n";
     foreach my $factor (0..$#streams) {
@@ -67,7 +77,9 @@ while (defined $_) {
       push @outtoken, $f;
     }
     print " " if $i != 0;
+    print $left;
     print join("|", @outtoken);
+    print $right;
   }
   print "\n";
   $_ = readline($firststream);
@@ -76,4 +88,9 @@ close $firststream;
 print STDERR "Done.\n";
 
 
-
+sub replaceSpaces
+{
+  my $s = shift;
+  $s =~ s/ /_/g;
+  return $s;
+}

@@ -17,7 +17,7 @@ print STDERR "Training Transliteration Module - Start\n".`date`;
 my $ORDER = 5;
 my $OUT_DIR = "/tmp/Transliteration-Model.$$";
 my $___FACTOR_DELIMITER = "|";
-my ($MOSES_SRC_DIR,$CORPUS_F,$CORPUS_E,$ALIGNMENT,$SRILM_DIR,$FACTOR,$EXTERNAL_BIN_DIR,$INPUT_EXTENSION, $OUTPUT_EXTENSION, $SOURCE_SYNTAX, $TARGET_SYNTAX,$DECODER);
+my ($MOSES_SRC_DIR,$CORPUS_F,$CORPUS_E,$ALIGNMENT,$KENLM_DIR,$FACTOR,$EXTERNAL_BIN_DIR,$INPUT_EXTENSION, $OUTPUT_EXTENSION, $SOURCE_SYNTAX, $TARGET_SYNTAX,$DECODER);
 
 # utilities
 my $ZCAT = "gzip -cd";
@@ -33,22 +33,21 @@ die("ERROR: wrong syntax when invoking train-transliteration-module.perl")
 		       'alignment=s' => \$ALIGNMENT,
 		       'order=i' => \$ORDER,
 		       'factor=s' => \$FACTOR,
-		       'srilm-dir=s' => \$SRILM_DIR,
+		       'kenlm-dir=s' => \$KENLM_DIR,
 		       'out-dir=s' => \$OUT_DIR,
 		       'decoder=s' => \$DECODER,
 		       'source-syntax' => \$SOURCE_SYNTAX,
 		       'target-syntax' => \$TARGET_SYNTAX);
 
 # check if the files are in place
-die("ERROR: you need to define --corpus-e, --corpus-f, --alignment, --srilm-dir, --moses-src-dir --external-bin-dir, --input-extension and --output-extension")
+die("ERROR: you need to define --corpus-e, --corpus-f, --alignment, --moses-src-dir --external-bin-dir, --input-extension and --output-extension")
     unless (defined($MOSES_SRC_DIR) &&
             defined($CORPUS_F) &&
             defined($CORPUS_E) &&
             defined($ALIGNMENT)&&
 	     defined($INPUT_EXTENSION)&&
 	     defined($OUTPUT_EXTENSION)&&
-	     defined($EXTERNAL_BIN_DIR)&&
-            defined($SRILM_DIR));
+	     defined($EXTERNAL_BIN_DIR));
 die("ERROR: could not find input corpus file '$CORPUS_F'")
     unless -e $CORPUS_F;
 die("ERROR: could not find output corpus file '$CORPUS_E'")
@@ -56,6 +55,9 @@ die("ERROR: could not find output corpus file '$CORPUS_E'")
 die("ERROR: could not find alignment file '$ALIGNMENT'")
     unless -e $ALIGNMENT;
 $DECODER = "$MOSES_SRC_DIR/bin/moses" unless defined($DECODER);
+$KENLM_DIR = "$MOSES_SRC_DIR/bin" unless defined($KENLM_DIR);
+#my $tmpdir = "/ebay/mt/tmp/skhadivi";
+$tmpdir = "/ebay/mt/tmp" unless defined($tmpdir);
 
 `mkdir $OUT_DIR`;
 
@@ -175,11 +177,12 @@ sub learn_transliteration_model{
       -lexical-file $OUT_DIR/model/lex -phrase-translation-table \\
       $OUT_DIR/model/phrase-table`;
 
-  print STDERR "Train Language Models\n";
+  print "Train Language Models\n";
 
-  `$SRILM_DIR/ngram-count \\
-      -order 5 -interpolate -kndiscount -addsmooth1 0.0 -unk \\
-      -text $OUT_DIR/lm/target -lm $OUT_DIR/lm/targetLM`;
+  `$KENLM_DIR/lmplz \\
+  	--order 5 --discount_fallback --interpolate_unigrams 0 \\
+	--text $OUT_DIR/lm/target --arpa $OUT_DIR/lm/targetLM \\
+	-S 8192M -T $tmpdir`;
 
   `$MOSES_SRC_DIR/bin/build_binary \\
       $OUT_DIR/lm/targetLM $OUT_DIR/lm/targetLM.bin`;
