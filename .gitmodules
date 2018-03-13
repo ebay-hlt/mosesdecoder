@@ -7,3 +7,6 @@
 [submodule "contrib/omtc/omtc"]
 	path = contrib/omtc/omtc
 	url = https://github.com/ianj-als/omtc.git
+[submodule "Commons"]
+	path = Commons
+	url = git@github.corp.ebay.com:HLT/Commons.git
