@@ -1,0 +1,6 @@
+TESTDESCRIPTION="Moses mira optimization with post-processing and 'return-best-dev'"
+TESTEXECUTABLE="$BASEDIR/regression-testing/test-moses-mira/startMosesMiraTest.sh"
+TESTFILEPREFIX="$BASEDIR/regression-testing/test-moses-mira/moses-mira"
+
+TESTTEMPLATE="$TESTEXECUTABLE"
+DIFFIGNORE=""

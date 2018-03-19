@@ -1,0 +1,39 @@
+# MERT optimized configuration
+# BLEU 0.8549 on dev
+# We were before running iteration 2
+### MOSES CONFIG FILE ###
+#########################
+
+# input factors
+[input-factors]
+0
+
+# mapping steps
+[mapping]
+0 T 0
+
+[distortion-limit]
+6
+
+# additional settings
+
+[placeholder-factor]
+1
+[xml-input]
+exclusive
+
+# feature functions
+[feature]
+UnknownWordPenalty
+WordPenalty
+PhrasePenalty
+Distortion
+
+# core weights
+[weight]
+
+Distortion0= 0.990401033186358
+LM0= 0.00959896681364218
+WordPenalty0= 0
+PhrasePenalty0= 0
+TranslationModel0= 0 0

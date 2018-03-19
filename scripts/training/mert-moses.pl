@@ -1175,7 +1175,7 @@ if($___RETURN_BEST_DEV) {
       $candidate = "--candidate run$i.out$ppSuffix";
     }
     else {
-      die "File not found: run$i.best$___N_BEST_LIST_SIZE.out.gz" unless -r "run$i.best$___N_BEST_LIST_SIZE.out.gz";
+      die "File not found: run$i.best$___N_BEST_LIST_SIZE.out$ppSuffix.gz" unless -r "run$i.best$___N_BEST_LIST_SIZE.out$ppSuffix.gz";
       $candidate = "--nbest run$i.best$___N_BEST_LIST_SIZE.out$ppSuffix.gz";
     }
     my $cmd = "$mert_eval_cmd --reference " . join(",", @references) . " $mert_extract_args $candidate";

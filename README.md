@@ -27,6 +27,7 @@ Compile Moses
 Run `./compile.sh` to compile Moses, assuming all the dependencies are installed in your `opt/` folder.
 
 Again, make sure that the machine you are installing Moses on has Ubuntu14 release.
+Make sure your `Switch.pm` exists in your `PERL5LIB` path.
 
 Regression Tests
 ================
