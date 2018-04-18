@@ -3,7 +3,7 @@ FROM gleusch/mosesserver-builder:latest
 WORKDIR /home/devuser/build
 
 
-RUN ./compile-noirst.sh
+RUN ./compile.sh
 
 
 FROM ubuntu:14.04
