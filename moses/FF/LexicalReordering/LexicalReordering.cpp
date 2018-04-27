@@ -23,6 +23,7 @@ LexicalReordering(const std::string &line)
 
   map<string,string> sparseArgs;
   m_haveDefaultScores = false;
+  size_t additional_components=0;
   for (size_t i = 0; i < m_args.size(); ++i) {
     const vector<string> &args = m_args[i];
 
@@ -30,7 +31,14 @@ LexicalReordering(const std::string &line)
       m_configuration.reset(new LRModel(args[1]));
       m_configuration->SetScoreProducer(this);
       m_modelTypeString = m_configuration->GetModelString();
-    } else if (args[0] == "input-factor")
+      m_configuration->SetAdditionalScoreComponents(additional_components);
+    }
+    else if (args[0] == "additional-features") { // set additional features here
+    	additional_components = Scan<float>(args[1]);
+    	if (m_configuration != NULL)
+    		m_configuration->SetAdditionalScoreComponents(additional_components);
+    }
+    else if (args[0] == "input-factor")
       m_factorsF =Tokenize<FactorType>(args[1]);
     else if (args[0] == "output-factor")
       m_factorsE =Tokenize<FactorType>(args[1]);

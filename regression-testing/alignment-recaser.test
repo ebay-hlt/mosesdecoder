@@ -1,0 +1,7 @@
+TESTDESCRIPTION="Alignment based recaser"
+TESTEXECUTABLE="$BASEDIR/scripts/recaser/alignment-based-recaser.pl"
+TESTFILEPREFIX="$BASEDIR/regression-testing/test-alignment-based-recaser/FILE"
+TESTFILEPREFIXDIR="$BASEDIR/regression-testing/test-alignment-based-recaser"
+
+TESTTEMPLATE="paste -d'\n' $TESTFILEPREFIXDIR/source $TESTFILEPREFIXDIR/target $TESTFILEPREFIXDIR/align | $TESTEXECUTABLE > $TESTFILEPREFIX.OUT"
+DIFFIGNORE=""
