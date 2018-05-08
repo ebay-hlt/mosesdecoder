@@ -80,15 +80,15 @@ $(call safepath,${CMPH_PREFIX}/bin/cmph):
 
 # irstlm for irstlm
 #irstlm: URL=$(sourceforge)/irstlm/irstlm/irstlm-5.80/irstlm-5.80.08.tgz
-#irstlm: TMP=$(CWD)/build/irstlm
-#irstlm: VERSION=$(basename $(notdir $(irstlm_url)))
-#irstlm: override PREFIX=${IRSTLM_PREFIX}
-#irstlm: | $(call safepath,$(IRSTLM_PREFIX)/bin/build-lm.sh)
-#$(call safepath,$(IRSTLM_PREFIX)/bin/build-lm.sh):
-#	$(sfget)
-#	cd $$(find '${TMP}' -name trunk) && ./regenerate-makefiles.sh \
-#	&& ./configure --prefix='${PREFIX}' && make -j${nproc} && make install -j${nproc}
-#	rm -rf ${TMP}
+irstlm: TMP=$(CWD)/build/irstlm
+irstlm: VERSION=$(basename $(notdir $(irstlm_url)))
+irstlm: override PREFIX=${IRSTLM_PREFIX}
+irstlm: | $(call safepath,$(IRSTLM_PREFIX)/bin/build-lm.sh)
+$(call safepath,$(IRSTLM_PREFIX)/bin/build-lm.sh):
+	mkdir -p '${TMP}' && cd '${TMP}'/.. && git clone https://github.com/irstlm-team/irstlm	
+	cd '${TMP}' && ./regenerate-makefiles.sh \
+	&& ./configure --prefix='${PREFIX}' && make -j${nproc} && make install -j${nproc}
+	rm -rf ${TMP}
 
 # boost 
 boost: URL=http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.gz/download
