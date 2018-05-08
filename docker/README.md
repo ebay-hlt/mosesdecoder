@@ -10,12 +10,9 @@ Build
 In the parent directory, run
 
 ```
-docker build -t gleusch/mosesserver-builder -f docker/Dockerfile.builder
-docker build -t gleusch/mosesserver -f docker/Dockerfile .
+docker build -t ${USER}/mosesserver-builder -f docker/Dockerfile.builder .
+docker build -t ${USER}/mosesserver -f docker/Dockerfile --build-arg USER=$USER --build-arg COMPILEOPT=-j4 .
 ```
-
-You should change the user name accordingly.
-
 
 Use image
 =========

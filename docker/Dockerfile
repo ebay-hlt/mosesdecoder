@@ -1,9 +1,11 @@
 # Actually build Moses. You need to have built Dockerfile.builder as ${USER}/moses-builder
-FROM gleusch/mosesserver-builder:latest 
+ARG USER
+FROM ${USER}/mosesserver-builder:latest 
 WORKDIR /home/devuser/build
 
 
-RUN ./compile.sh
+ARG COMPILEOPT
+RUN ./compile.sh ${COMPILEOPT}
 
 
 FROM ubuntu:14.04
