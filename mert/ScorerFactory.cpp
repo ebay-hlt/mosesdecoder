@@ -8,6 +8,7 @@
 #include "TerScorer.h"
 #include "CderScorer.h"
 #include "SerScorer.h"
+#include "CHRFScorer.h"
 #include "InterpolatedScorer.h"
 #include "SemposScorer.h"
 #include "PermutationScorer.h"
@@ -27,6 +28,7 @@ vector<string> ScorerFactory::getTypes()
   vector<string> types;
   types.push_back(string("BLEU"));
   types.push_back(string("BLEUDOC"));
+  types.push_back(string("CHRF"));
   types.push_back(string("PER"));
   types.push_back(string("TER"));
   types.push_back(string("CDER"));
@@ -66,6 +68,8 @@ Scorer* ScorerFactory::getScorer(const string& type, const string& config)
     return (PermutationScorer*) new PermutationScorer(type, config);
   } else if (type == "METEOR") {
     return new MeteorScorer(config);
+  } else if(type == "CHRF") {
+	return new CHRFScorer(config);
   } else if (type == "HWCM") {
     return new HwcmScorer(config);
   } else {
